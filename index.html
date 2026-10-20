@@ -1,0 +1,587 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17365d">
+  <title>Manajemen Kontraktor</title>
+  <style>
+    :root {
+      --navy: #17365d;
+      --blue: #1d5da8;
+      --bg: #f3f5f9;
+      --border: #dce2eb;
+      --text: #182337;
+      --muted: #657188;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Arial, sans-serif;
+    }
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 22px max(18px, calc((100% - 1100px)/2));
+    }
+    header h1 { margin: 0; font-size: 25px; }
+    header p { margin: 5px 0 0; opacity: .85; }
+    main { max-width: 1100px; margin: auto; padding: 18px; }
+    .card {
+      background: white;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px #18233708;
+      min-width: 0;
+    }
+    h2 { margin: 0 0 14px; font-size: 19px; }
+    h3 { margin: 0 0 6px; font-size: 16px; }
+    label { display: block; font-weight: 600; margin-top: 8px; }
+    input, select, textarea, button {
+      display: block;
+      width: 100%;
+      font: inherit;
+      padding: 11px 12px;
+      margin: 5px 0 10px;
+      border: 1px solid #cbd3df;
+      border-radius: 7px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #8bbcf3;
+      outline-offset: 1px;
+    }
+    button {
+      cursor: pointer;
+      color: white;
+      background: var(--blue);
+      border: 0;
+      font-weight: 700;
+    }
+    button.secondary { background: #566477; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+      gap: 14px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+      gap: 14px;
+    }
+    .stat-value { font-size: 24px; font-weight: 700; overflow-wrap: anywhere; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .hidden { display: none !important; }
+    .notice {
+      background: #eef4fc;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-wrap: anywhere;
+    }
+    .item { border-top: 1px solid var(--border); padding: 14px 0; }
+    .item:first-child { border-top: 0; }
+    .pill {
+      display: inline-block;
+      background: #eaf1fb;
+      color: #214d81;
+      padding: 3px 9px;
+      border-radius: 30px;
+      font-size: 12px;
+    }
+    .money { font-weight: 700; color: #176b48; }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+      gap: 16px;
+    }
+    .danger { background: #9b2933; }
+    footer { text-align: center; padding: 18px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Manajemen Kontraktor</h1>
+  <p>Pengelolaan proyek, progres pekerjaan, dan keuangan</p>
+</header>
+
+<main>
+  <section id="authPanel" class="card">
+    <h2>Masuk ke aplikasi</h2>
+    <p class="muted">Akun baru akan menunggu persetujuan admin.</p>
+    <label for="name">Nama lengkap (untuk pendaftaran)</label>
+    <input id="name" autocomplete="name" maxlength="100" placeholder="Nama lengkap">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="nama@email.com">
+    <label for="password">Kata sandi</label>
+    <input id="password" type="password" autocomplete="current-password"
+      minlength="6" placeholder="Minimal 6 karakter">
+    <div class="grid">
+      <button id="loginBtn">Masuk</button>
+      <button id="registerBtn" class="secondary">Daftar akun baru</button>
+    </div>
+    <p id="authMessage" class="notice" role="status">Silakan masuk atau mendaftar.</p>
+  </section>
+
+  <section id="appPanel" class="hidden">
+    <div class="card">
+      <div class="grid">
+        <div>
+          <h2 id="welcome">Manajemen Kontraktor</h2>
+          <div id="roleLabel" class="muted"></div>
+        </div>
+        <div><button id="logoutBtn" class="secondary">Keluar</button></div>
+      </div>
+      <p id="appMessage" class="notice" role="status">Memuat aplikasi...</p>
+    </div>
+
+    <section id="pendingPanel" class="card hidden">
+      <h2>Akun menunggu persetujuan</h2>
+      Akun Anda sudah dibuat, tetapi admin perlu menetapkan peran
+      admin, mandor, atau keuangan pada profil di Firebase Console.
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="stats">
+        <div class="card">
+          <div class="muted">Jumlah proyek</div>
+          <div id="projectCount" class="stat-value">0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Total nilai kontrak</div>
+          <div id="contractTotal" class="stat-value">Rp0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Total pengeluaran</div>
+          <div id="expenseTotal" class="stat-value">Rp0</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <section id="projectFormCard" class="card hidden">
+          <h2>Tambah proyek</h2>
+          <form id="projectForm">
+            <label for="projectName">Nama proyek *</label>
+            <input id="projectName" required maxlength="120">
+            <label for="client">Nama klien</label>
+            <input id="client" maxlength="120">
+            <label for="location">Lokasi proyek</label>
+            <input id="location" maxlength="200">
+            <label for="contractValue">Nilai kontrak (Rp) *</label>
+            <input id="contractValue" type="number" min="0" step="1" required>
+            <label for="startDate">Tanggal mulai</label>
+            <input id="startDate" type="date">
+            <label for="endDate">Target selesai</label>
+            <input id="endDate" type="date">
+            <label for="projectStatus">Status</label>
+            <select id="projectStatus">
+              <option>Belum dimulai</option>
+              <option>Berjalan</option>
+              <option>Selesai</option>
+              <option>Ditunda</option>
+            </select>
+            <button type="submit">Simpan proyek</button>
+          </form>
+        </section>
+
+        <section id="expenseFormCard" class="card hidden">
+          <h2>Catat pengeluaran</h2>
+          <form id="expenseForm">
+            <label for="expenseProject">Proyek *</label>
+            <select id="expenseProject" required></select>
+            <label for="expenseCategory">Kategori pengeluaran</label>
+            <select id="expenseCategory">
+              <option>Material</option>
+              <option>Upah tenaga kerja</option>
+              <option>Transportasi</option>
+              <option>Sewa alat</option>
+              <option>Operasional</option>
+              <option>Lainnya</option>
+            </select>
+            <label for="expenseNote">Keterangan *</label>
+            <input id="expenseNote" required maxlength="200">
+            <label for="expenseAmount">Jumlah (Rp) *</label>
+            <input id="expenseAmount" type="number" min="1" step="1" required>
+            <label for="expenseDate">Tanggal *</label>
+            <input id="expenseDate" type="date" required>
+            <button type="submit">Simpan pengeluaran</button>
+          </form>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>Daftar proyek</h2>
+        <div id="projectList">Memuat proyek...</div>
+      </section>
+
+      <section class="card">
+        <h2>Riwayat pengeluaran</h2>
+        <div id="expenseList">Memuat pengeluaran...</div>
+      </section>
+    </section>
+  </section>
+</main>
+<footer>Manajemen Kontraktor · Data tersimpan di Cloud Firestore</footer>
+
+<script type="module">
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword,
+    signInWithEmailAndPassword, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, getDoc, getDocs, addDoc,
+    serverTimestamp, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+  // Konfigurasi dari project Firebase kontraktor-e53c9.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBXPZE8MyXFV9yAWF31P1WagguuldmxjWY",
+    authDomain: "kontraktor-e53c9.firebaseapp.com",
+    projectId: "kontraktor-e53c9",
+    storageBucket: "kontraktor-e53c9.firebasestorage.app",
+    messagingSenderId: "114745399131",
+    appId: "1:114745399131:web:00e7a6a3531443e1836c7e",
+    measurementId: "G-78QC597ZHE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  let currentProfile = null;
+  let projects = [];
+  let expenses = [];
+  let busy = false;
+
+  const money = value => new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(value || 0));
+
+  // Semua data dari database ditampilkan sebagai teks yang di-escape.
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
+
+  const showMessage = (id, text) => { $(id).textContent = text; };
+
+  function readableError(error) {
+    const messages = {
+      "auth/email-already-in-use": "Email sudah terdaftar.",
+      "auth/invalid-email": "Format email tidak valid.",
+      "auth/weak-password": "Kata sandi terlalu lemah; gunakan minimal 6 karakter.",
+      "auth/invalid-credential": "Email atau kata sandi salah.",
+      "auth/network-request-failed": "Koneksi internet bermasalah.",
+      "permission-denied": "Akses ditolak oleh aturan keamanan Firestore.",
+      "unavailable": "Firebase sementara tidak tersedia. Coba lagi."
+    };
+    return messages[error.code] || messages[error.message] || error.message ||
+      "Terjadi kesalahan yang tidak diketahui.";
+  }
+
+  function setBusy(value) {
+    busy = value;
+    ["loginBtn", "registerBtn"].forEach(id => {
+      $(id).disabled = value;
+    });
+  }
+
+  function roleName(role) {
+    return ({
+      admin: "Admin",
+      mandor: "Mandor",
+      keuangan: "Keuangan",
+      pending: "Menunggu persetujuan"
+    })[role] || "Belum ditetapkan";
+  }
+
+  function showLoggedIn(isLoggedIn) {
+    $("authPanel").classList.toggle("hidden", isLoggedIn);
+    $("appPanel").classList.toggle("hidden", !isLoggedIn);
+  }
+
+  $("registerBtn").addEventListener("click", async () => {
+    if (busy) return;
+    const name = $("name").value.trim();
+    const email = $("email").value.trim();
+    const password = $("password").value;
+
+    if (!name) return showMessage("authMessage", "Isi nama lengkap terlebih dahulu.");
+    if (!email || password.length < 6) {
+      return showMessage("authMessage", "Isi email dan kata sandi minimal 6 karakter.");
+    }
+
+    setBusy(true);
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js")
+        .then(({ setDoc }) => setDoc(doc(db, "users", credential.user.uid), {
+          name,
+          email,
+          role: "pending",
+          createdAt: serverTimestamp()
+        }));
+      showMessage("authMessage", "Akun terdaftar. Minta admin menyetujui peran Anda.");
+    } catch (error) {
+      showMessage("authMessage", "Pendaftaran: " + readableError(error));
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  $("loginBtn").addEventListener("click", async () => {
+    if (busy) return;
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    if (!email || !password) {
+      return showMessage("authMessage", "Masukkan email dan kata sandi.");
+    }
+    setBusy(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      showMessage("authMessage", "Login berhasil.");
+    } catch (error) {
+      showMessage("authMessage", "Login: " + readableError(error));
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      showMessage("appMessage", "Tidak dapat keluar: " + readableError(error));
+    }
+  });
+
+  onAuthStateChanged(auth, async user => {
+    currentUser = user;
+    currentProfile = null;
+    showLoggedIn(!!user);
+    $("dashboard").classList.add("hidden");
+    $("pendingPanel").classList.add("hidden");
+    if (!user) return;
+
+    $("welcome").textContent = user.email || "Pengguna";
+    $("roleLabel").textContent = "Memeriksa peran...";
+    showMessage("appMessage", "Memuat profil pengguna...");
+
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists()) {
+        $("pendingPanel").classList.remove("hidden");
+        $("roleLabel").textContent = "Profil belum tersedia";
+        showMessage("appMessage",
+          "Profil tidak ditemukan. Hubungi admin Firebase untuk pemeriksaan.");
+        return;
+      }
+
+      currentProfile = snap.data();
+      $("welcome").textContent = currentProfile.name || user.email;
+      $("roleLabel").textContent = "Peran: " + roleName(currentProfile.role);
+
+      if (!["admin", "mandor", "keuangan"].includes(currentProfile.role)) {
+        $("pendingPanel").classList.remove("hidden");
+        showMessage("appMessage", "Akun belum diaktifkan admin.");
+        return;
+      }
+
+      $("dashboard").classList.remove("hidden");
+      $("projectFormCard").classList.toggle("hidden",
+        currentProfile.role !== "admin");
+      $("expenseFormCard").classList.toggle("hidden",
+        !["admin", "keuangan"].includes(currentProfile.role));
+
+      await refreshData();
+      showMessage("appMessage", "Data berhasil dimuat.");
+    } catch (error) {
+      showMessage("appMessage",
+        "Gagal memuat data: " + readableError(error) +
+        " Pastikan aturan Firestore sudah dipublikasikan.");
+    }
+  });
+
+  async function refreshData() {
+    const [projectSnap, expenseSnap] = await Promise.all([
+      getDocs(collection(db, "projects")),
+      getDocs(collection(db, "expenses"))
+    ]);
+
+    projects = projectSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    expenses = expenseSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    $("projectCount").textContent = projects.length;
+    $("contractTotal").textContent =
+      money(projects.reduce((sum, p) => sum + Number(p.contractValue || 0), 0));
+    $("expenseTotal").textContent =
+      money(expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0));
+
+    $("projectList").innerHTML = projects.length ? projects.map(p => `
+      <article class="item">
+        <h3>${esc(p.name)}</h3>
+        <div>${esc(p.client || "Klien belum diisi")} · ${esc(p.location || "Lokasi belum diisi")}</div>
+        <p>Nilai kontrak: <span class="money">${money(p.contractValue)}</span></p>
+        <p><span class="pill">${esc(p.status || "Belum ditentukan")}</span></p>
+        <div class="muted">Mulai: ${esc(p.startDate || "-")} · Target: ${esc(p.endDate || "-")}</div>
+        ${["admin", "mandor"].includes(currentProfile.role) ? `
+          <form class="progressForm" data-project="${esc(p.id)}">
+            <label>Laporan progres pekerjaan</label>
+            <textarea name="note" required maxlength="1000"
+              placeholder="Contoh: pemasangan pondasi sudah 60%"></textarea>
+            <button type="submit">Kirim laporan progres</button>
+          </form>
+          <div id="progress-${esc(p.id)}" class="muted">Memuat laporan...</div>
+        ` : ""}
+      </article>
+    `).join("") : "<p>Belum ada proyek.</p>";
+
+    $("expenseProject").innerHTML = projects.length
+      ? projects.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")
+      : '<option value="">Belum ada proyek</option>';
+
+    $("expenseFormCard").classList.toggle("hidden",
+      !["admin", "keuangan"].includes(currentProfile.role) || !projects.length);
+
+    $("expenseList").innerHTML = expenses.length ? expenses.map(e => {
+      const project = projects.find(p => p.id === e.projectId);
+      return `<article class="item">
+        <h3>${esc(e.note)}</h3>
+        <div>${esc(project?.name || "Proyek tidak ditemukan")} · ${esc(e.category)}</div>
+        <p class="money">${money(e.amount)}</p>
+        <div class="muted">Tanggal: ${esc(e.date || "-")}</div>
+      </article>`;
+    }).join("") : "<p>Belum ada pengeluaran.</p>";
+
+    document.querySelectorAll(".progressForm").forEach(form => {
+      form.addEventListener("submit", submitProgress);
+    });
+
+    for (const p of projects) {
+      const target = $("progress-" + p.id);
+      if (!target) continue;
+      try {
+        const snap = await getDocs(query(
+          collection(db, "projects", p.id, "progress"),
+          orderBy("createdAt", "desc")
+        ));
+        target.innerHTML = snap.empty ? "Belum ada laporan progres." :
+          snap.docs.map(d => `
+            <div class="item">
+              ${esc(d.data().note)}
+              <div class="muted">${d.data().createdAt?.toDate
+                ? esc(d.data().createdAt.toDate().toLocaleString("id-ID"))
+                : ""}</div>
+            </div>`).join("");
+      } catch (error) {
+        target.textContent = "Laporan belum dapat dimuat: " + readableError(error);
+      }
+    }
+  }
+
+  $("projectForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (currentProfile?.role !== "admin") {
+      return showMessage("appMessage", "Hanya admin yang dapat menambah proyek.");
+    }
+    const contractValue = Number($("contractValue").value);
+    if (!Number.isFinite(contractValue) || contractValue < 0) {
+      return showMessage("appMessage", "Nilai kontrak harus nol atau lebih.");
+    }
+
+    const button = event.submitter;
+    if (button) button.disabled = true;
+    try {
+      await addDoc(collection(db, "projects"), {
+        name: $("projectName").value.trim(),
+        client: $("client").value.trim(),
+        location: $("location").value.trim(),
+        contractValue,
+        startDate: $("startDate").value,
+        endDate: $("endDate").value,
+        status: $("projectStatus").value,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+      event.target.reset();
+      showMessage("appMessage", "Proyek berhasil disimpan.");
+      await refreshData();
+    } catch (error) {
+      showMessage("appMessage", "Gagal menyimpan proyek: " + readableError(error));
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+
+  $("expenseForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!["admin", "keuangan"].includes(currentProfile?.role)) {
+      return showMessage("appMessage", "Hanya admin/keuangan yang dapat mencatat pengeluaran.");
+    }
+    const amount = Number($("expenseAmount").value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return showMessage("appMessage", "Jumlah pengeluaran harus lebih dari nol.");
+    }
+
+    const button = event.submitter;
+    if (button) button.disabled = true;
+    try {
+      await addDoc(collection(db, "expenses"), {
+        projectId: $("expenseProject").value,
+        category: $("expenseCategory").value,
+        note: $("expenseNote").value.trim(),
+        amount,
+        date: $("expenseDate").value,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+      event.target.reset();
+      showMessage("appMessage", "Pengeluaran berhasil disimpan.");
+      await refreshData();
+    } catch (error) {
+      showMessage("appMessage", "Gagal menyimpan pengeluaran: " + readableError(error));
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+
+  async function submitProgress(event) {
+    event.preventDefault();
+    if (!["admin", "mandor"].includes(currentProfile?.role)) {
+      return showMessage("appMessage", "Hanya admin/mandor yang dapat melaporkan progres.");
+    }
+    const form = event.currentTarget;
+    const projectId = form.dataset.project;
+    const note = new FormData(form).get("note").toString().trim();
+    if (!note) return;
+
+    const button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      await addDoc(collection(db, "projects", projectId, "progress"), {
+        note,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+      form.reset();
+      showMessage("appMessage", "Laporan progres berhasil disimpan.");
+      await refreshData();
+    } catch (error) {
+      showMessage("appMessage", "Gagal menyimpan progres: " + readableError(error));
+    } finally {
+      button.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
